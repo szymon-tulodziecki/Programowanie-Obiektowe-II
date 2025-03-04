@@ -15,7 +15,6 @@ To repozytorium zawiera materiały i zadania z przedmiotu Programowanie Obiektow
    git clone https://github.com/szymon-tulodziecki/Programowanie-Obiektowe-II.git
    ```
 2. Otwórz projekt w swoim ulubionym IDE obsługującym Javę.
-3. Przeglądaj kod źródłowy i wykonuj zadania z poszczególnych laboratoriów.
 
 ## Wymagania
 
