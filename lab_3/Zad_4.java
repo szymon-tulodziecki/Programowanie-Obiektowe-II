@@ -1,6 +1,6 @@
 import java.util.Scanner;
 
-public class Zad_3 {
+public class Zad_4 {
 
     public static void wczytaj(){
         int r;
@@ -18,19 +18,23 @@ public class Zad_3 {
     }
 
     public static void sortuj(int[] tab) {
-        int n = tab.length;
-        int porownania = 0;
+        int n = tab.length, porownania = 0, ostatniaZamiana;
 
-        for (int i = 0; i < n - 1; i++) {
-            for (int j = 0; j < n - 1 - i; j++) {
+
+        do {
+            ostatniaZamiana = 0;
+            for (int j = 0; j < n - 1; j++) {
                 porownania++;
                 if (tab[j] > tab[j + 1]) {
                     tab[j] = tab[j] ^ tab[j + 1];
                     tab[j + 1] = tab[j] ^ tab[j + 1];
                     tab[j] = tab[j] ^ tab[j + 1];
                 }
+                ostatniaZamiana = j + 1;
             }
-        }
+            n = ostatniaZamiana;
+        }while(ostatniaZamiana > 0);
+
 
         System.out.println("Porównań: " + porownania);
     }
