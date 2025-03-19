@@ -48,6 +48,18 @@ public class Zad_7{
 
         return liczby.length / suma;
     }
+
+    public static double maks(double[] liczby){
+        double maks = liczby[0];
+
+        for(int i = 1; i < liczby.length; i++){
+            if(liczby[i] > maks){
+                maks = liczby[i];
+            }
+        }
+
+        return maks;
+    }
     public static void main(String[] args){
 
         double[] tab = wczytaj_tablice();
@@ -59,7 +71,7 @@ public class Zad_7{
         System.out.println("Średnia arytmetyczna liczb: " + srednia_arytmetyczna(tab));
         System.out.println("Średnia geometryczna liczb: " + srednia_geometryczna(tab));
         System.out.println("Średnia harmoniczna liczb: " + srednia_harmoniczna(tab));
-
+        System.out.println("Maks liczba: " + maks(tab));
 
     }
 }
