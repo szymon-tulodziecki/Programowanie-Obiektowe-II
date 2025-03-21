@@ -1,140 +1,102 @@
-class Klucz {
-    private final int p, q, r, e, d;
+import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
-    public Klucz(int p, int q, int e) {
-        if (!isProbablePrime(p) || !isProbablePrime(q)) {
-            throw new IllegalArgumentException("p i q muszą być liczbami pierwszymi!");
+class RSA {
+    private final BigInteger p;
+    private final BigInteger q;
+    public final BigInteger n;
+    public final BigInteger e;
+    private final BigInteger d;
+
+    public RSA(BigInteger p, BigInteger q, BigInteger e) {
+        if (!p.isProbablePrime(100) || !q.isProbablePrime(100)) {
+            throw new IllegalArgumentException("Oba parametry p i q muszą być liczbami pierwszymi");
         }
 
         this.p = p;
         this.q = q;
-        this.r = p * q;
-        int phi = (p - 1) * (q - 1);
+        this.n = p.multiply(q);
+        this.e = e;
 
-        if (gcd(e, phi) != 1) {
-            throw new IllegalArgumentException("e musi być względnie pierwsze z φ(n)!");
+        BigInteger phi = p.subtract(BigInteger.ONE).multiply(q.subtract(BigInteger.ONE));
+        
+        if (!e.gcd(phi).equals(BigInteger.ONE)) {
+            throw new IllegalArgumentException("e musi być względnie pierwsze z wartością φ(n)");
         }
 
-        this.e = e; 
-        this.d = modInverse(e, phi); 
+        this.d = e.modInverse(phi);
     }
 
-    private boolean isProbablePrime(int n) {
-        if (n <= 1) return false;
-        for (int i = 2; i * i <= n; i++) {
-            if (n % i == 0) return false;
-        }
-        return true;
-    }
+    public BigInteger szyfruj(String tekst) {
+        byte[] tekstBajty = tekst.getBytes(StandardCharsets.UTF_8);
+        int maxDlugosc = (n.bitLength() + 7) / 8 - 1;
 
-    private int gcd(int a, int b) {
-        while (b != 0) {
-            int temp = b;
-            b = a % b;
-            a = temp;
-        }
-        return a;
-    }
-
-    private int modInverse(int a, int m) {
-        int m0 = m, t, q;
-        int x0 = 0, x1 = 1;
-
-        if (m == 1) return 0;
-
-        while (a > 1) {
-            q = a / m;
-            t = m;
-            m = a % m;
-            a = t;
-            t = x0;
-            x0 = x1 - q * x0;
-            x1 = t;
+        if (tekstBajty.length > maxDlugosc) {
+            throw new IllegalArgumentException("Tekst zbyt długi. Maksymalna długość: " + maxDlugosc + " bajtów");
         }
 
-        if (x1 < 0) x1 += m0;
-
-        return x1;
+        BigInteger tekstInt = new BigInteger(1, tekstBajty);
+        return tekstInt.modPow(e, n);
     }
 
-    public int getR() {
-        return r;
-    }
+    public String deszyfruj(BigInteger liczba) {
+        BigInteger odszyfrowanyInt = liczba.modPow(d, n);
+        byte[] odszyfrowaneBajty = odszyfrowanyInt.toByteArray();
 
-    public int getE() {
-        return e;
-    }
-
-    public int getD() {
-        return d;
+        int nonZeroIndex = 0;
+        while (nonZeroIndex < odszyfrowaneBajty.length && odszyfrowaneBajty[nonZeroIndex] == 0) {
+            nonZeroIndex++;
+        }
+        
+        byte[] trimmedBytes = Arrays.copyOfRange(odszyfrowaneBajty, nonZeroIndex, odszyfrowaneBajty.length);
+        
+        try {
+            return new String(trimmedBytes, StandardCharsets.UTF_8);
+        } catch (Exception ex) {
+            throw new IllegalArgumentException("Błąd dekodowania", ex);
+        }
     }
 }
 
+
 public class zad_5 {
+public static void main(String[] args) {
+        BigInteger P = new BigInteger(
+            "176897372882635987275889773432181556648728946202747932157927040748686463885209870085463625211254276129699599518299969391191355317422076373607867367861862529758264338800409693234977972196526541496518986872840579204021277140838456934687842315202989813674484166713327370221517985737028962029391688753639797535757"
+        );
+        
+        BigInteger Q = new BigInteger(
+            "157076046644720725538647759301613898052353238593474669201498505034149665144409972183337363974131801268070252067376597552875950883908684415804694571497446806800533706474362729761457161180674990196308220409468623813309786096319493066102924556234943113909399960279404008353089220302399954039930110163429863335743"
+        );
+        
+        BigInteger E = new BigInteger("65537");
 
-    public static int[] koduj(String tekst, Klucz k) {
-        int r = k.getR();
-        int e = k.getE();
-        int[] zaszyfrowane = new int[tekst.length()];
+        RSA rsa = new RSA(P, Q, E);
 
-        for (int i = 0; i < tekst.length(); i++) {
-            int hlp = (int) tekst.charAt(i);
+        System.out.println("Klucz publiczny: (" + rsa.e + ", " + rsa.n + ")");
+        String tekst = "KOT KOT .";
+        System.out.println("\nOryginalna wiadomość: " + tekst);
 
-            if (hlp >= r) {
-                throw new IllegalArgumentException("Kod ASCII znaku jest zbyt duży dla podanego modułu!");
-            }
-
-            zaszyfrowane[i] = modPow(hlp, e, r); 
-        }
-
-        return zaszyfrowane;
-    }
-
-    public static String dekoduj(int[] zaszyfrowane, Klucz k) {
-        int r = k.getR();
-        int d = k.getD();
-        StringBuilder odszyfrowanyTekst = new StringBuilder();
-
-        for (int zaszyfrowany : zaszyfrowane) {
-            int tekst = modPow(zaszyfrowany, d, r); 
-            odszyfrowanyTekst.append((char) tekst);
-        }
-
-        return odszyfrowanyTekst.toString();
-    }
-
-    private static int modPow(int base, int exp, int mod) {
-        int result = 1;
-        base = base % mod;
-        while (exp > 0) {
-            if ((exp & 1) == 1) result = (result * base) % mod;
-            exp >>= 1;
-            base = (base * base) % mod;
-        }
-        return result;
-    }
-
-    public static void main(String[] args) {
         try {
-            int p = 17, q = 23, e = 7;
+            BigInteger zaszyfrowana = rsa.szyfruj(tekst);
+            System.out.println("\nZaszyfrowana wiadomość: " + zaszyfrowana);
+            
+            String odszyfrowana = rsa.deszyfruj(zaszyfrowana);
+            System.out.println("\nOdszyfrowana wiadomość: " + odszyfrowana);
+        } catch (IllegalArgumentException ex) {
+            System.out.println("\nBłąd szyfrowania: " + ex.getMessage());
+        }
 
-            Klucz klucz = new Klucz(p, q, e);
 
-            String tekst = "SZYMON 21312";
-            System.out.println("Oryginalna wiadomość: " + tekst);
-
-            int[] zakodowane = koduj(tekst, klucz);
-
-            System.out.print("Zaszyfrowana wiadomość: ");
-            for (int zakodowana : zakodowane) {
-                System.out.print(zakodowana + " ");
-            }
-
-            System.out.println();
-
-            String odkodowane = dekoduj(zakodowane, klucz);
-            System.out.println("Odszyfrowana wiadomość: " + odkodowane);
-
+        System.out.println("\n \n \n");
+        BigInteger wklejonaLiczba = new BigInteger(
+            "8113215864280423455698701528975575613562080825585299662542186714182157159361526533595131145867017993804983084833045110011537083213227589801601166085822256904967362301031361916870343647406016270389319876674692261555697375581744474088287382695653082755881530775516019073134722529802705387332923129738215293214652454297186540999983667864402494407458537394747447087609168478410585340688245765618030306797185625034634481943047137682337139947060472794790263372745936091151912503566093747223450687250603237234940625514673832398643582662669613150563983896809018690408899200931427038873160212637221475239850559036602941048800"
+        );
+        
+        try {
+            String wynik = rsa.deszyfruj(wklejonaLiczba);
+            System.out.println("\nOdszyfrowana wiadomość: " + wynik);
         } catch (IllegalArgumentException ex) {
             System.out.println("Błąd: " + ex.getMessage());
         }
