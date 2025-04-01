@@ -43,9 +43,10 @@ class OdcinekParab extends FiguraImpl {
   private double a, b, h; 
   public OdcinekParab(double a, double b, double h) { this.a = a; this.b = b; this.h = h; }
 
-  public double pole() { return (a * a) / (2 * h * Math.sinh(2 * h / a));}
-  public double obwod() { return Math.sqrt(a*a + b*b); }
-}
+  public double obwod() { return ((a * a) / (2 * h * Math.sinh(2 * h / a))+ 2*a);}
+  public double pole() {
+    return (4/3) * a * h;
+  }}
 
 public class P1_BMI_Figur {
   public static void main (String[] args) {
